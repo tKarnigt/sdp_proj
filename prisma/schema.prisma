@@ -1,0 +1,160 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  output = "../node_modules/.prisma/client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              String            @id @default(uuid())
+  firstname       String?
+  lastname        String?
+  username        String
+  hashPassword    String
+  token           String?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  isLogin         Boolean           @default(false)
+  attractinReview AttractionReview[]
+  productReview   ProductReview[]
+  basket          Basket[]
+}
+
+model AttractionCatagory {
+  id          String       @id @default(uuid())
+  type        String
+  attractions Attraction[]
+}
+
+model Attraction {
+  id                   String              @id @default(uuid())
+  attractionCatagory   AttractionCatagory  @relation(fields: [attractionCatagoryId], references: [id])
+  attractionCatagoryId String
+  name                 String
+  detail               String?
+  address              String?
+  pictures             PicutreAttraction[]
+  location             Location?
+  hotels               Hotel[]
+  reviews              AttractionReview[]
+}
+
+
+model Location{
+  id          String  @id @default(uuid())
+  latitude    Float?
+  longitude   Float?
+  attraction  Attraction @relation(fields: [attractionId], references: [id])
+  attractionId String    @unique
+}
+
+
+model PicutreAttraction {
+  id           String     @id @default(uuid())
+  image        String
+  attraction   Attraction @relation(fields: [attractionId], references: [id])
+  attractionId String
+}
+
+
+model AttractionReview {
+  id           String     @id @default(uuid())
+  user         User       @relation(fields: [userId], references: [id])
+  userId       String     
+  detail       String?
+  rating       Float?
+  createdAt    DateTime   @default(now())
+  attraction   Attraction @relation(fields: [attractionId], references: [id])
+  attractionId String
+}
+
+model Hotel {
+  id           String     @id @default(uuid())
+  attraction   Attraction @relation(fields: [attractionId], references: [id])
+  attractionId String
+  name         String
+  price        Float?
+  rating       Float?
+  countReview  Int?
+  image        String?
+  url          String?
+  addOns       AddOn[]
+}
+
+model AddOn {
+  id      String @id @default(uuid())
+  type    String
+  hotel   Hotel  @relation(fields: [hotelId], references: [id])
+  hotelId String
+}
+
+model Product {
+  id                String            @id @default(uuid())
+  productCatagory   ProductCatagory   @relation(fields: [productCatagoryId], references: [id])
+  productCatagoryId String
+  name              String
+  price             String?
+  detail            String?
+  pices             String?
+  image             ImagePoduct[]
+  productReview     ProductReview[]
+  baskets           BasketToProduct[]
+}
+
+model ImagePoduct{
+  id          String @id @default(uuid())
+  image       String 
+  product     Product   @relation(fields: [productId], references: [id])
+  productId   String
+}
+
+model ProductCatagory {
+  id       String    @id @default(uuid())
+  type     String
+  productViewing Int?
+  products Product[]
+}
+
+model ProductReview {
+  id        String   @id @default(uuid())
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String   @unique
+  detail    String?
+  rating    Float?
+  createdAt DateTime @default(now())
+  product   Product  @relation(fields: [productId], references: [id])
+  productId String
+}
+
+model Basket {
+  id         String            @id @default(uuid())
+  user       User              @relation(fields: [userId], references: [id])
+  userId     String
+  address    String?
+  totalPrice Float?
+  payment    Payment?
+  products   BasketToProduct[]
+}
+
+model Payment {
+  id         String  @id @default(uuid())
+  method     String
+  isSuccessd Boolean @default(false)
+  basket     Basket  @relation(fields: [basketId], references: [id])
+  basketId   String  @unique
+}
+
+model BasketToProduct {
+  basket    Basket  @relation(fields: [basketId], references: [id])
+  basketId  String
+  product   Product @relation(fields: [productId], references: [id])
+  productId String
+
+  @@id([basketId, productId])
+}

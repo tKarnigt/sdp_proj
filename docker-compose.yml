@@ -1,0 +1,79 @@
+version: '3.8'
+
+services:
+
+  db:
+    container_name: postgresql_db
+    image: postgres
+    restart: always
+
+    volumes:
+      - ./data/db:/var/lib/postgresql/data
+
+    environment:
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: root
+      POSTGRES_DB: sdpDb
+    
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    
+    ports:
+      - "5432:5432"
+
+    networks:
+      app_net:
+        ipv4_address: 192.168.0.2
+    
+
+  pgadmin:
+    container_name: pgadmin4
+    image: dpage/pgadmin4
+    depends_on:
+      - db
+    restart: always
+
+    volumes:
+      - ./data/pgadmin-data:/var/lib/pgadmin
+    
+    environment:
+      PGADMIN_DEFAULT_EMAIL: root@root.com
+      PGADMIN_DEFAULT_PASSWORD: root
+
+    ports:
+      - "5050:80"
+    
+    networks:
+      app_net:
+        ipv4_address: 192.168.0.3
+
+  prisma-app:
+    container_name: prisma-api
+    build: ./
+    restart: always
+    depends_on:
+      db:
+        condition: service_healthy
+
+    environment:
+      DATABASE_URL: postgresql://root:root@192.168.0.2:5432/sdpDb
+      PORT: 8000
+      ACCESS_TOKEN_SECRET: "9bfa611c626259efd6491440db1b97081e5c851a1fca53daff8182b191e0180c322d472113f5e0b71bebbeee83b2378cf346576184e2ee5dbe22d2faab8c08f7"
+    ports:
+      - '8000:8000'
+
+    networks:
+      app_net:
+        ipv4_address: 192.168.0.4
+
+networks:
+  app_net:
+    ipam:
+      driver: default
+      config:
+        - subnet: "192.168.0.0/24"
+          gateway: 192.168.0.1
+  

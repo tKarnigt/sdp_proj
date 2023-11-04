@@ -1,0 +1,9 @@
+node_modules
+npm-debug.log
+.env
+dist
+Dockerfile
+README.md
+LICENSE
+data
+docker-compose.yml
